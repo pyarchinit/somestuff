@@ -1,0 +1,80 @@
+-- View: public.pyarchinit_individui_view
+
+-- DROP VIEW public.pyarchinit_individui_view;
+
+CREATE OR REPLACE VIEW public.pyarchinit_individui_view AS 
+ SELECT pyarchinit_individui.gid, pyarchinit_individui.the_geom, pyarchinit_individui.sito as sito_ind, pyarchinit_individui.id_individuo, pyarchinit_individui.note, individui_table.id_scheda_ind, individui_table.sito, individui_table.area, individui_table.us, individui_table.nr_individuo, individui_table.data_schedatura, individui_table.schedatore, individui_table.sesso, individui_table.eta_min, individui_table.eta_max, individui_table.classi_eta, individui_table.osservazioni
+   FROM pyarchinit_individui
+   JOIN individui_table ON pyarchinit_individui.sito::text = individui_table.sito AND pyarchinit_individui.id_individuo::text = individui_table.nr_individuo::text;
+
+ALTER TABLE public.pyarchinit_individui_view OWNER TO postgres;
+
+-- View: public.pyarchinit_quote_view
+
+-- DROP VIEW public.pyarchinit_quote_view;
+
+CREATE OR REPLACE VIEW public.pyarchinit_quote_view AS 
+ SELECT pyarchinit_quote.gid, pyarchinit_quote.sito_q, pyarchinit_quote.area_q, pyarchinit_quote.us_q, pyarchinit_quote.unita_misu_q, pyarchinit_quote.quota_q, pyarchinit_quote.the_geom, us_table.id_us, us_table.sito, us_table.area, us_table.us, us_table.struttura, us_table.d_stratigrafica, us_table.d_interpretativa, us_table.descrizione, us_table.interpretazione, us_table.rapporti, us_table.periodo_iniziale, us_table.fase_iniziale, us_table.periodo_finale, us_table.fase_finale, us_table.anno_scavo, us_table.cont_per
+   FROM pyarchinit_quote
+   JOIN us_table ON pyarchinit_quote.sito_q::text = us_table.sito AND pyarchinit_quote.area_q::text = us_table.area::text AND pyarchinit_quote.us_q::text = us_table.us::text;
+
+ALTER TABLE public.pyarchinit_quote_view OWNER TO postgres;
+
+-- View: public.pyarchinit_reperti_e_us_view
+
+-- DROP VIEW public.pyarchinit_reperti_e_us_view;
+
+CREATE OR REPLACE VIEW public.pyarchinit_reperti_e_us_view AS 
+ SELECT inventario_materiali_table.id_invmat, inventario_materiali_table.sito AS sito_rep, inventario_materiali_table.area AS area_rep, inventario_materiali_table.us AS us_rep, inventario_materiali_table.tipo_reperto, inventario_materiali_table.criterio_schedatura, inventario_materiali_table.definizione, inventario_materiali_table.descrizione AS descrizione_rep, inventario_materiali_table.lavato, inventario_materiali_table.nr_cassa, inventario_materiali_table.luogo_conservazione, inventario_materiali_table.stato_conservazione AS stato_conservazione_rep, inventario_materiali_table.datazione_reperto, inventario_materiali_table.elementi_reperto, inventario_materiali_table.misurazioni, inventario_materiali_table.rif_biblio, inventario_materiali_table.tecnologie, us_table.sito AS sito_us, us_table.area AS area_us, us_table.us AS us_us, us_table.d_stratigrafica, us_table.d_interpretativa, us_table.descrizione AS descrizione_us, us_table.interpretazione AS interpretazione_us, us_table.periodo_iniziale, us_table.fase_iniziale, us_table.periodo_finale, us_table.fase_finale, us_table.scavato, us_table.attivita, us_table.anno_scavo, us_table.metodo_di_scavo, us_table.inclusi, us_table.campioni, us_table.rapporti, us_table.data_schedatura, us_table.schedatore, us_table.formazione, us_table.stato_di_conservazione, us_table.colore, us_table.consistenza, us_table.struttura, us_table.cont_per
+   FROM inventario_materiali_table
+   JOIN us_table ON inventario_materiali_table.sito = us_table.sito AND inventario_materiali_table.area::text = us_table.area::text AND inventario_materiali_table.us::text = us_table.us::text;
+
+ALTER TABLE public.pyarchinit_reperti_e_us_view OWNER TO postgres;
+
+
+-- View: public.pyarchinit_reperti_e_us_e_poligoni_view
+
+-- DROP VIEW public.pyarchinit_reperti_e_us_e_poligoni_view;
+
+CREATE OR REPLACE VIEW public.pyarchinit_reperti_e_us_e_poligoni_view AS 
+ SELECT pyarchinit_reperti_e_us_view.id_invmat, pyarchinit_reperti_e_us_view.sito_rep, pyarchinit_reperti_e_us_view.area_rep, pyarchinit_reperti_e_us_view.us_rep, pyunitastratigrafiche.gid AS gid_us, pyunitastratigrafiche.scavo_s, pyunitastratigrafiche.area_s, pyunitastratigrafiche.us_s, pyunitastratigrafiche.the_geom
+   FROM pyarchinit_reperti_e_us_view
+   JOIN pyunitastratigrafiche ON pyarchinit_reperti_e_us_view.sito_rep = pyunitastratigrafiche.scavo_s::text AND pyarchinit_reperti_e_us_view.area_rep::text = pyunitastratigrafiche.area_s::text AND pyarchinit_reperti_e_us_view.us_rep::text = pyunitastratigrafiche.us_s::text;
+
+ALTER TABLE public.pyarchinit_reperti_e_us_e_poligoni_view OWNER TO postgres;
+
+
+-- View: public.pyarchinit_reperti_us_poligoni_groupped
+
+-- DROP VIEW public.pyarchinit_reperti_us_poligoni_groupped;
+
+CREATE OR REPLACE VIEW public.pyarchinit_reperti_us_poligoni_groupped AS 
+ SELECT pyarchinit_reperti_e_us_e_poligoni_view.id_invmat AS new_id_invmat, st_union(pyarchinit_reperti_e_us_e_poligoni_view.the_geom) AS new_geom
+   FROM pyarchinit_reperti_e_us_e_poligoni_view
+  GROUP BY pyarchinit_reperti_e_us_e_poligoni_view.id_invmat;
+
+ALTER TABLE public.pyarchinit_reperti_us_poligoni_groupped OWNER TO postgres;
+
+-- View: public.pyarchinit_reperti_view
+
+-- DROP VIEW public.pyarchinit_reperti_view;
+
+CREATE OR REPLACE VIEW public.pyarchinit_reperti_view AS 
+ SELECT pyarchinit_reperti_e_us_view.id_invmat, pyarchinit_reperti_e_us_view.sito_rep, pyarchinit_reperti_e_us_view.area_rep, pyarchinit_reperti_e_us_view.us_rep, pyarchinit_reperti_e_us_view.tipo_reperto, pyarchinit_reperti_e_us_view.criterio_schedatura, pyarchinit_reperti_e_us_view.definizione, pyarchinit_reperti_e_us_view.descrizione_rep, pyarchinit_reperti_e_us_view.lavato, pyarchinit_reperti_e_us_view.nr_cassa, pyarchinit_reperti_e_us_view.luogo_conservazione, pyarchinit_reperti_e_us_view.stato_conservazione_rep, pyarchinit_reperti_e_us_view.datazione_reperto, pyarchinit_reperti_e_us_view.elementi_reperto, pyarchinit_reperti_e_us_view.misurazioni, pyarchinit_reperti_e_us_view.rif_biblio, pyarchinit_reperti_e_us_view.tecnologie, pyarchinit_reperti_e_us_view.sito_us, pyarchinit_reperti_e_us_view.area_us, pyarchinit_reperti_e_us_view.us_us, pyarchinit_reperti_e_us_view.d_stratigrafica, pyarchinit_reperti_e_us_view.d_interpretativa, pyarchinit_reperti_e_us_view.descrizione_us, pyarchinit_reperti_e_us_view.interpretazione_us, pyarchinit_reperti_e_us_view.periodo_iniziale, pyarchinit_reperti_e_us_view.fase_iniziale, pyarchinit_reperti_e_us_view.periodo_finale, pyarchinit_reperti_e_us_view.fase_finale, pyarchinit_reperti_e_us_view.scavato, pyarchinit_reperti_e_us_view.attivita, pyarchinit_reperti_e_us_view.anno_scavo, pyarchinit_reperti_e_us_view.metodo_di_scavo, pyarchinit_reperti_e_us_view.inclusi, pyarchinit_reperti_e_us_view.campioni, pyarchinit_reperti_e_us_view.rapporti, pyarchinit_reperti_e_us_view.data_schedatura, pyarchinit_reperti_e_us_view.schedatore, pyarchinit_reperti_e_us_view.formazione, pyarchinit_reperti_e_us_view.stato_di_conservazione, pyarchinit_reperti_e_us_view.colore, pyarchinit_reperti_e_us_view.consistenza, pyarchinit_reperti_e_us_view.struttura, pyarchinit_reperti_e_us_view.cont_per, pyarchinit_reperti_us_poligoni_groupped.new_id_invmat, pyarchinit_reperti_us_poligoni_groupped.new_geom
+   FROM pyarchinit_reperti_e_us_view
+   JOIN pyarchinit_reperti_us_poligoni_groupped ON pyarchinit_reperti_us_poligoni_groupped.new_id_invmat::text = pyarchinit_reperti_e_us_view.id_invmat::text;
+
+ALTER TABLE public.pyarchinit_reperti_view OWNER TO postgres;
+
+-- View: public.pyarchinit_us_view
+
+-- DROP VIEW public.pyarchinit_us_view;
+
+CREATE OR REPLACE VIEW public.pyarchinit_us_view AS 
+ SELECT pyunitastratigrafiche.gid, pyunitastratigrafiche.the_geom, pyunitastratigrafiche.tipo_us_s, pyunitastratigrafiche.scavo_s, pyunitastratigrafiche.area_s, pyunitastratigrafiche.us_s, pyunitastratigrafiche.stratigraph_index_us, us_table.id_us, us_table.sito, us_table.area, us_table.us, us_table.struttura, us_table.d_stratigrafica AS definizione_stratigrafica, us_table.d_interpretativa AS definizione_interpretativa, us_table.descrizione, us_table.interpretazione, us_table.rapporti, us_table.periodo_iniziale, us_table.fase_iniziale, us_table.periodo_finale, us_table.fase_finale, us_table.anno_scavo, us_table.cont_per, us_table.order_layer
+   FROM pyunitastratigrafiche
+   JOIN us_table ON pyunitastratigrafiche.scavo_s::text = us_table.sito AND pyunitastratigrafiche.area_s::text = us_table.area::text AND pyunitastratigrafiche.us_s = us_table.us
+  ORDER BY us_table.order_layer DESC, pyunitastratigrafiche.stratigraph_index_us DESC, pyunitastratigrafiche.gid;
+
+ALTER TABLE public.pyarchinit_us_view OWNER TO postgres;
+
